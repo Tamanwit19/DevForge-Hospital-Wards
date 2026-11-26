@@ -1,8 +1,8 @@
 """Parse input files in memory and export a defensive baseline."""
-import argparse,csv,io,json,os,time,sys
+import argparse,csv,io,json,os,time,sys,re
 from pathlib import Path
 from ingest import walk,sha256_file,decode_bytes,KNOWN
-from privacy import Sanitizer,alias_patterns,evidence,norm,kind,ID
+from privacy import Sanitizer,alias_patterns,evidence,norm,kind,band,ID,PHONE,OTHER
 from crypto import pseudonym,date_shift_days
 from linkage import InternalLinks
 from fhir_guard import validate_bundle,clean_attachments,remap_bundle_uuids
@@ -40,6 +40,28 @@ def units(fmt,data):
                     for i,v in enumerate(data[k])]
             if groups: return groups
     return [('doc',data)]
+
+def quasi_values(record,policy):
+    ages=set(); districts=set()
+    def scan(value,key='',depth=0):
+        if depth>40: return
+        if isinstance(value,dict):
+            for child_key,child in value.items(): scan(child,child_key,depth+1)
+        elif isinstance(value,list):
+            for child in value: scan(child,key,depth+1)
+        elif kind(key)=='age':
+            match=re.search(r'\d{1,3}',str(value))
+            if match:
+                age=int(match.group())
+                if 0<=age<=120:
+                    ages.add(band(age,policy.get('age_band_width',5),policy.get('age_top_code',90)))
+        elif kind(key)=='district' and isinstance(value,str) and value.strip():
+            districts.add(norm(value))
+    scan(record)
+    if len(ages)==1 and len(districts)==1:
+        return next(iter(ages)),next(iter(districts))
+    return None
+
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--input',required=True);ap.add_argument('--output',required=True);ap.add_argument('--policy',default=None)
     a=ap.parse_args(); t=time.monotonic()
@@ -55,10 +77,15 @@ def main():
     files=[]; records=[]; parsed=[]; aliases=[]; counts=dict.fromkeys(['files_total','files_sanitized','files_quarantined','records_processed','identifiers_detected','records_linked','records_generalized','records_suppressed','records_quarantined'],0)
     try:
         import yaml
-        policy=yaml.safe_load((Path(a.policy) if a.policy else Path(__file__).with_name('policy.yaml')).read_text(encoding='utf-8')) or {}
-    except (ImportError,OSError):
-        if a.policy: sys.exit('Cannot load requested privacy policy')
-        policy={}
+    except ImportError:
+        sys.exit('PyYAML is required to load the privacy policy')
+    policy_path=Path(a.policy) if a.policy else Path(__file__).parent/'config'/'policy.yaml'
+    try:
+        policy=yaml.safe_load(policy_path.read_text(encoding='utf-8')) or {}
+    except (OSError,yaml.YAMLError):
+        sys.exit('Cannot load privacy policy')
+    if not isinstance(policy,dict):
+        sys.exit('Privacy policy must contain a YAML mapping')
     for p,rel in walk(str(src)):
         p=Path(p); counts['files_total']+=1
         if p.is_symlink(): sys.exit('Symbolic links are unsupported in input')
@@ -71,37 +98,67 @@ def main():
             if fmt=='text': aliases.append(data)
         except (ValueError,UnicodeError,RecursionError,csv.Error,OSError): ent['reason']='unsupported_or_invalid';counts['files_quarantined']+=1
     san=Sanitizer(alias_patterns(aliases),policy)
-    links=InternalLinks((evidence(v) for _,_,_,_,_,us in parsed for _,v in us),
-                        (v for _,rel,_,_,_,us in parsed if rel.parts[0]=='registration' for _,v in us))
-    safe_dirs={'registration','lab','billing','clean','discharge','fhir','misc','notes','opd','prescriptions'}
+    registration_records=[v for _,rel,_,_,_,us in parsed if rel.parts[0]=='registration' for _,v in us]
+    links=InternalLinks((evidence(v) for _,_,_,_,_,us in parsed for _,v in us),registration_records)
+    cohorts={}
+    sparse_patients=set()
+    for record in registration_records:
+        patient=links.resolve(evidence(record),record)
+        signature=quasi_values(record,policy)
+        if patient and signature:
+            cohorts.setdefault(signature,set()).add(patient)
+    threshold=max(2,int(policy.get('rare_value_k',5)))
+    for signature,patients in cohorts.items():
+        if len(patients)<threshold:
+            sparse_patients.update(patients)
     for idx,(p,rel,ent,fmt,data,us) in enumerate(parsed):
-        # Opaque names keep file-name PII out of release; preserve known category.
-        category=rel.parts[0] if len(rel.parts)>1 and rel.parts[0] in safe_dirs else 'other'
-        dest=Path('sanitized')/category/f'doc_{idx:05d}{p.suffix.lower()}'
-        target=out/dest; local=[]; changed={}; before=san.detected; generalized=0
+        # Preserve the input folder layout. Rename only path components that
+        # contain identifiers or names learned from registration records.
+        parts=[]
+        for i,component in enumerate(rel.parts):
+            if i==len(rel.parts)-1:
+                stem=p.stem
+                identifier_search=stem.replace('_',' ')
+                name_search=identifier_search.replace('-',' ')
+                sensitive=bool(ID.search(identifier_search) or PHONE.search(identifier_search) or OTHER.search(identifier_search))
+                sensitive=sensitive or any(pattern.search(name_search) for pattern in san.aliases)
+                parts.append(f'doc_{idx:05d}{p.suffix.lower()}' if sensitive else component)
+            else:
+                identifier_search=component.replace('_',' ')
+                name_search=identifier_search.replace('-',' ')
+                sensitive=bool(ID.search(identifier_search) or PHONE.search(identifier_search) or OTHER.search(identifier_search))
+                sensitive=sensitive or any(pattern.search(name_search) for pattern in san.aliases)
+                parts.append(f'dir_{i}_{idx:05d}' if sensitive else component)
+        dest=Path('sanitized')/Path(*parts)
+        target=out/dest; local=[]; changed={}; before=san.detected; generalized=0; suppressed_records=0
         try:
             for loc,v in us:
                 ids=evidence(v)
-                patient=links.resolve(ids)
+                patient=links.resolve(ids,v)
                 days=date_shift_days(patient or pseudonym(ent['input_sha256']),policy.get('date_shift_days',180))
                 monthfirst='arogya' in p.name.lower()
                 prior=san.generalized
+                prior_suppressed=san.suppressed
+                suppress_quasi=patient is None or patient in sparse_patients
                 if fmt=='csv':
                     # Keep input columns as internal keys. Sanitize header only
                     # at serialization, to avoid losing data when it changes.
-                    clean={k:san.value(value,k,patient,days,monthfirst) for k,value in v.items()}
+                    clean={k:san.value(value,k,patient,days,monthfirst,suppress_quasi=suppress_quasi) for k,value in v.items()}
                 else:
-                    clean=san.value(v,patient=patient,days=days,monthfirst=monthfirst)
+                    clean=san.value(v,patient=patient,days=days,monthfirst=monthfirst,suppress_quasi=suppress_quasi)
                 generalized+=san.generalized>prior
+                suppressed_records+=san.suppressed>prior_suppressed
                 if patient and patient not in json.dumps(clean,ensure_ascii=False): patient=None
                 changed[loc]=clean
-                if category!='clean': local.append({'file':dest.as_posix(),'loc':loc,'patient':patient})
+                if rel.parts[0]!='clean': local.append({'file':dest.as_posix(),'loc':loc,'patient':patient})
             if fmt=='text': result=changed['doc']
             elif fmt=='csv':
                 h,rows,delim=data; buf=io.StringIO(newline='');w=csv.writer(buf,delimiter=delim,lineterminator='\n')
                 headers=[]
                 for x in h:
-                    cleaned=f'column_{len(headers)}' if ID.search(x) else san.text(x)
+                    contains_pii=bool(ID.search(x) or PHONE.search(x) or OTHER.search(x))
+                    contains_pii=contains_pii or any(pattern.search(x) for pattern in san.aliases)
+                    cleaned=f'column_{len(headers)}' if contains_pii else x
                     if cleaned in headers: cleaned=f'{cleaned}_{len(headers)}'
                     headers.append(cleaned)
                 w.writerow(headers)
@@ -126,6 +183,7 @@ def main():
             counts['files_sanitized']+=1; counts['records_processed']+=len(local)
             counts['records_linked']+=sum(r['patient'] is not None for r in local)
             counts['identifiers_detected']+=san.detected-before; counts['records_generalized']+=generalized;records.extend(local)
+            counts['records_suppressed']+=suppressed_records
         except (ValueError,TypeError,KeyError,RecursionError,OSError):
             ent['reason']='processing_failed';counts['files_quarantined']+=1
     (out/'records.jsonl').write_text(''.join(json.dumps(x,ensure_ascii=False)+'\n' for x in records),encoding='utf-8')

@@ -24,6 +24,9 @@ def audit(output,k=5,width=5,top=90):
     total_rows=0
     unlinked_rows=0
     partial_rows=0
+    suppressed_district_rows=0
+    suppressed_age_rows=0
+    patients_suppressed_district=set()
     for f in sorted(root.glob('*')):
         if f.suffix in ('.csv','.tsv'):
             with f.open(encoding='utf-8',newline='') as stream:
@@ -35,6 +38,13 @@ def audit(output,k=5,width=5,top=90):
         for row in rows:
             total_rows+=1
             ids=set(PSN.findall(json.dumps(row,ensure_ascii=False)))
+            field_values={re.sub(r'[^a-z]','',str(k).lower()):v for k,v in row.items()}
+            if isinstance(field_values.get('district',field_values.get('jila')),str) and str(field_values.get('district',field_values.get('jila'))).startswith('['):
+                suppressed_district_rows+=1
+                patients_suppressed_district.update(ids)
+            age_value=field_values.get('age',field_values.get('umar'))
+            if isinstance(age_value,str) and age_value.startswith('['):
+                suppressed_age_rows+=1
             if len(ids)!=1:
                 unlinked_rows+=1
                 continue
@@ -52,8 +62,12 @@ def audit(output,k=5,width=5,top=90):
     return {'threshold_k':k,'registration_rows':total_rows,'unlinked_or_ambiguous_rows':unlinked_rows,
             'rows_missing_one_or_more_fields':partial_rows,'distinct_registration_pseudonyms':len(all_pseudonyms),
             'cohorts_checked':len(cohorts),'pseudonyms_with_complete_fields':len(seen),
-            'pseudonyms_in_small_cohorts':len(small),
-            'coverage_note':'Registration exports only; pseudonyms may not equal unique real patients. Not a proof of anonymity.'}
+            'pseudonyms_in_small_cohorts':len(small) if cohorts else None,
+            'rows_with_suppressed_district':suppressed_district_rows,
+            'rows_with_suppressed_age':suppressed_age_rows,
+            'pseudonyms_with_suppressed_district':len(patients_suppressed_district),
+            'risk_assessment_coverage':'partial' if suppressed_district_rows or partial_rows else 'complete',
+            'coverage_note':'Visible registration cohorts only; suppressed or missing fields are not evidence of low risk. Not a proof of anonymity.'}
 if __name__=='__main__':
     p=argparse.ArgumentParser()
     p.add_argument('--output',required=True)

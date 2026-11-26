@@ -22,7 +22,8 @@ def pseudonym(cluster_key: str) -> str:
 
 def date_shift_days(patient_id: str, span: int = 180) -> int:
     """Same patient -> same shift everywhere, so intervals/stay length are preserved."""
-    return int.from_bytes(_mac("shift", patient_id)[:4], "big") % (2 * span + 1) - span
+    shift = int.from_bytes(_mac("shift", patient_id)[:4], "big") % (2 * span + 1) - span
+    return shift if shift != 0 else 1
 
 def token(kind: str, value: str, n: int = 8) -> str:
     """Deterministic placeholder for non-patient entities (e.g. relatives)."""

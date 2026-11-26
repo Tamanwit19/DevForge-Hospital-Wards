@@ -2,7 +2,7 @@
 .idea/
 __pycache__/
 output*/
+out_*/
 Secret-Wards-ToolKit/
 *.pyc
 .env
-CODEBASE_EXPLAINED.md

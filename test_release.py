@@ -83,4 +83,13 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(result['rows_missing_one_or_more_fields'],1)
             self.assertEqual(result['pseudonyms_with_complete_fields'],1)
             self.assertNotIn('Example District',json.dumps(result))
+    def test_audit_marks_fully_suppressed_cohorts_unmeasurable(self):
+        with tempfile.TemporaryDirectory() as t:
+            p=Path(t)/'sanitized'/'registration';p.mkdir(parents=True)
+            (p/'fixture.csv').write_text('patient_name,age,district\nPSN-ABCDEFGH,45-49,[REDACTED]\n',encoding='utf-8')
+            result=audit(t)
+            self.assertIsNone(result['pseudonyms_in_small_cohorts'])
+            self.assertEqual(result['rows_with_suppressed_district'],1)
+            self.assertEqual(result['pseudonyms_with_suppressed_district'],1)
+            self.assertEqual(result['risk_assessment_coverage'],'partial')
 if __name__=='__main__': unittest.main()

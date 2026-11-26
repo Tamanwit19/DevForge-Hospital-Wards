@@ -1,14 +1,41 @@
 """Offline, conservative de-identification of synthetic hospital exports."""
 import re, unicodedata
 from datetime import datetime, timedelta
-from crypto import pseudonym, date_shift_days
+from crypto import pseudonym, date_shift_days, token
+from identity_normalization import canonical_tokens
 
 ID = re.compile(r'(?i)\b(?:UHID[-/]\d+|JJH-\d+|SNJ[-/]\d{2}[-/]\d+|DHH(?:-IPD-\d+|\d{4}-\d+)|ADM\d+|IP[-/]\d{2}[-/]\d+|IPD-\d{4}-\d+|OPD/\d+/\d+/\d+|PMJAY-[A-Z]+-\d+|POL/\d+/\d+|[A-Z]{5}\d{4}[A-Z])\b')
-PHONE = re.compile(r'(?<!\w)(?:\+91[ -]?)?\d{5}[ -]?\d{5}(?!\w)')
-OTHER = re.compile(r'(?i)(?<!\w)(?:\d{4}[ -]?\d{4}[ -]?\d{4}|\d{2}-\d{4}-\d{4}-\d{4}|XXXX[ -]?XXXX[ -]?\d{4}|[\w.+-]+@[\w.-]+)(?!\w)')
+PHONE = re.compile(r'(?<!\w)(?:\+91[ -]?)?(?:\d{5}[ -]?\d{5}|[6-9\u0966-\u0969]\d{9})(?!\w)')
+OTHER = re.compile(r'(?i)(?<!\w)(?:\d{4}[ -]?\d{4}[ -]?\d{4}|\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{2}|\d{2}-\d{4}-\d{4}-\d{4}|XXXX[ -]?XXXX[ -]?\d{4}|[\w.+-]+@[\w.-]+)(?!\w)')
 DATE = re.compile(r'\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}[-/]\d{1,2}[-/]\d{4})\b')
-LABEL = re.compile(r'(?im)(\b(?:patient\s*name|name|relative name|guardian|attendant|address|village|gram|mobile|mob\.?|phone|aadhaar|aadhar|abha|dob|s/o|d/o|w/o)\s*[:.]?\s+|(?:नाम|ग्राम|पता|मोबाइल|जन्म तिथि)\s*:\s*)([^\n\r]*?)(?=\s{2,}|[,;]|\r?$|\s+(?:Age|Sex|Reg No|UHID|Mob|BP|आयु)\s*[:/])')
+LABEL = re.compile(r'(?im)(\b(?:patient\s*name|name|relative name|guardian|attendant|address|village|gram|district|jila|tehsil|mobile|mob\.?|phone|aadhaar|aadhar|abha|dob|s/o|d/o|w/o)\s*[:.]?\s+|(?:नाम|ग्राम|पता|जिला|तहसील|मोबाइल|जन्म तिथि)\s*:\s*)([^\n\r]*?)(?=\s{2,}|[,;]|\r?$|\s+(?:Age|Sex|Reg No|UHID|Mob|BP|आयु)\s*[:/])')
 AGE = re.compile(r'(?i)(\b(?:age(?:/sex)?|umar)\s*:\s*|आयु\s*:\s*)(\d{1,3})')
+RELATIVE_PAIR = re.compile(
+    r'(?i)(?P<patient>[\w\u0900-\u097f.\-]+(?:[ \t,]+[\w\u0900-\u097f.\-]+){0,2})[ \t]*,?[ \t]+'
+    r'(?P<relation>s/o|d/o|w/o|पुत्र|पुत्री|पत्नी)[ \t]+'
+    r'(?P<relative>[\w\u0900-\u097f.\-]+(?:[ \t]+[\w\u0900-\u097f.\-]+){0,2})'
+)
+
+class AliasPatterns(list):
+    def __init__(self,names,full_names):
+        names=list(names)
+        full_names=list(full_names)
+        super().__init__(
+            re.compile(r'(?<!\w)'+re.escape(name)+r'(?!\w)',re.I)
+            for name in sorted(names,key=lambda item:(-len(item),item))
+            if len(name)>2 and not re.search(r'\d|\[|\n',name)
+        )
+        self.text_patterns=[
+            re.compile(r'(?<!\w)'+re.escape(name)+r'(?!\w)',re.I)
+            for name in sorted(set(full_names),key=lambda item:(-len(item),item))
+            if len(name)>2 and not re.search(r'\d|\[|\n',name)
+        ]
+        signatures={canonical_tokens(name) for name in full_names}
+        self.identity_signatures={value for value in signatures if len(value)>1}
+        self.single_signatures={
+            value for value in signatures if len(value)==1 and value[0] not in
+            {'devi','kumar','kumari','singh','muhammad','ji'}
+        }
 def norm(s):
     return ''.join(c for c in unicodedata.normalize('NFKC',str(s)).casefold() if c.isalnum() or unicodedata.category(c).startswith('M'))
 def kind(key):
@@ -20,6 +47,7 @@ def kind(key):
     if k.startswith('dob') or k in {'birthdate','janmtithi','dateofbirth'}: return 'dob'
     if k in {'age','umar','patientage','ageyears','आयु','उम्र','आयु'}: return 'age'
     if k in {'pin','pincode','zip','postalcode'}: return 'pin'
+    if k in {'district','districtname','jila','जिला'}: return 'district'
     if k in {'addressnote','address','pata','street','line','village','villagemohalla','gaon','city','tehsil','house','locality','landmark','residentialaddress','homeaddress','addressline','addressline1','addressline2','patientaddress','पता','sourcepath','exportedby','filename','attachment','data'}: return 'location'
     return ''
 def band(n,width=5,top=90):
@@ -30,33 +58,103 @@ def shift(m,days,monthfirst=False):
         try: return (datetime.strptime(s,fmt)+timedelta(days=days)).strftime(fmt)
         except ValueError: pass
     return '[DATE]'
+
+def _phone_digits(value):
+    digits=''.join(str(unicodedata.digit(char)) for char in str(value) if char.isdecimal())
+    if len(digits)==12 and digits.startswith('91'): digits=digits[2:]
+    elif len(digits)==11 and digits.startswith('0'): digits=digits[1:]
+    return digits if len(digits)==10 and digits[0] in '6789' else ''
+
 def evidence(obj):
     """Only explicit hospital identifiers; never infer identity from public registries."""
     ids=set()
-    def scan(x,k=''):
+    def scan(x,k='',depth=0):
+        if depth>40:
+            return
         if isinstance(x,dict):
-            for a,b in x.items(): scan(b,a)
+            for a,b in x.items(): scan(b,a,depth+1)
         elif isinstance(x,list):
-            for i in x: scan(i,k)
+            for i in x: scan(i,k,depth+1)
         elif isinstance(x,(str,int)):
             s=str(x)
             ids.update(norm(v.group()) for v in ID.finditer(s) if not re.match(r'(?i)^(OPD|POL|PMJAY)',v.group()))
             if kind(k)=='id' and k.lower() not in ('visit_id','bill_no') and len(s)>3: ids.add(norm(s))
+            key=norm(k)
+            contact_type=''
+            if 'aadhaar' in key or 'aadhar' in key: contact_type='aadhaar'
+            elif 'abha' in key: contact_type='abha'
+            elif 'pan' in key and key not in ('panels',): contact_type='pan'
+            elif any(part in key for part in ('email','mailaddress')): contact_type='email'
+            elif any(part in key for part in ('phone','mobile','telephone','contactnumber','contactno')): contact_type='phone'
+            elif any(part in key for part in ('insurance','pmjay','policyno')): contact_type='insurance'
+            if contact_type:
+                value=s.strip()
+                if contact_type=='phone':
+                    value=_phone_digits(value)
+                elif contact_type in ('aadhaar','abha'):
+                    value=re.sub(r'\D','',value)
+                    if contact_type=='aadhaar' and len(value)!=12: value=''
+                    elif contact_type=='abha' and len(value) not in (14,): value=''
+                elif contact_type=='email':
+                    value=value.casefold()
+                    if not re.fullmatch(r'[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}',value): value=''
+                elif contact_type=='pan':
+                    value=re.sub(r'\s','',value).upper()
+                    if not re.fullmatch(r'[A-Z]{5}\d{4}[A-Z]',value): value=''
+                else:
+                    value=re.sub(r'\s','',value).upper()
+                    if len(value)<6: value=''
+                if value:
+                    ids.add('contact:'+contact_type+':'+token('LINK_'+contact_type,value,32))
+            elif isinstance(x,str):
+                for match in PHONE.finditer(s):
+                    value=_phone_digits(match.group())
+                    if value:
+                        ids.add('contact-text:phone:'+token('LINK_phone',value,32))
     scan(obj)
     return ids
 class Sanitizer:
     def __init__(self, aliases, policy):
         self.aliases=aliases
+        self.identity_aliases=getattr(aliases,'identity_signatures',set())
+        self.single_aliases=getattr(aliases,'single_signatures',set())
         self.policy=policy
         self.detected=0
         self.generalized=0
+        self.suppressed=0
     def redact(self,replacement='[REDACTED]'):
         self.detected+=1
         return replacement
-    def text(self,s,patient=None,days=0,monthfirst=False):
+    def text(self,s,patient=None,days=0,monthfirst=False,suppress_quasi=False):
+        def relation_names(match):
+            patient_name=match.group('patient')
+            relative_name=match.group('relative')
+            patient_sig=canonical_tokens(patient_name)
+            relative_sig=canonical_tokens(relative_name)
+            redact_patient=patient_sig in self.identity_aliases or patient_sig in self.single_aliases
+            redact_relative=relative_sig in self.identity_aliases or relative_sig in self.single_aliases
+            if not redact_patient and not redact_relative:
+                return match.group()
+            start_patient,end_patient=match.span('patient')
+            start_relative,end_relative=match.span('relative')
+            result=match.group()
+            replacements=[]
+            if redact_patient:
+                replacements.append((start_patient-match.start(),end_patient-match.start(),self.redact(patient or '[NAME]')))
+            if redact_relative:
+                replacements.append((start_relative-match.start(),end_relative-match.start(),self.redact()))
+            for start,end,replacement in sorted(replacements,reverse=True):
+                result=result[:start]+replacement+result[end:]
+            return result
         def label(m):
             pre,val=m.groups()
             if not val.strip(): return m.group()
+            if norm(pre) in ('district','districtname','jila','tehsil','जिला','तहसील'):
+                if not suppress_quasi and self.policy.get('location_level')!='suppressed':
+                    return m.group()
+                self.generalized+=1
+                self.suppressed+=1
+                return pre+self.redact()
             return pre+self.redact(patient if patient and norm(pre) in ('name','patientname','नाम') else '[REDACTED]')
         # Context-specific spans in clinical notes, messages and visitor logs.
         patterns = [
@@ -69,6 +167,7 @@ class Sanitizer:
         ]
         for pattern in patterns:
             s=re.sub(pattern,lambda m:m[1]+self.redact(patient or '[NAME]')+' ',s)
+        s=RELATIVE_PAIR.sub(relation_names,s)
         s=re.sub(r'(?im)(\baddress\s*[:.]?\s+)[^\r\n]+',lambda m:m[1]+self.redact(),s)
         s=LABEL.sub(label,s)
         s=ID.sub(lambda m:self.redact(patient or '[ID]'),s)
@@ -83,16 +182,37 @@ class Sanitizer:
             return shift(m,days,monthfirst)
         s=DATE.sub(shift_date,s)
         # Remove names learned from explicitly labelled fields; protect clinician mentions.
-        for pattern in self.aliases:
+        for pattern in getattr(self.aliases,'text_patterns',self.aliases):
             s=pattern.sub(lambda m:m.group() if re.search(r'(?i)Dr\.?\s*$',s[max(0,m.start()-5):m.start()]) else self.redact(patient or '[NAME]'),s)
+        if self.identity_aliases:
+            words=list(re.finditer(r'[\w\u0900-\u097f]+',s))
+            matches=[]
+            lengths={len(signature) for signature in self.identity_aliases}
+            for size in lengths:
+                for start in range(max(0,len(words)-size+1)):
+                    span=words[start:start+size]
+                    signature=tuple(sorted(token for word in span for token in canonical_tokens(word.group())))
+                    if signature not in self.identity_aliases:
+                        continue
+                    left=span[0].start(); right=span[-1].end()
+                    if re.search(r'(?i)Dr\.?\s*$',s[max(0,left-5):left]):
+                        continue
+                    matches.append((left,right))
+            selected=[]
+            for left,right in sorted(set(matches),key=lambda item:(item[0],-(item[1]-item[0]))):
+                if any(left<end and right>start for start,end in selected):
+                    continue
+                selected.append((left,right))
+            for left,right in sorted(selected,reverse=True):
+                s=s[:left]+self.redact(patient or '[NAME]')+s[right:]
         s=re.sub(r'(?i)(?<!\w)[^\W\d_]+(?=\s+(?:sahab|bhai|behenji|amma|didi|ji|babu)\b)',lambda m:self.redact(patient or '[NAME]'),s)
         s=re.sub(r'(?im)(\b(?:address|ग्राम|पता)\s*:\s*)[^\r\n]+',lambda m:m[1]+self.redact(),s)
         return s
-    def value(self,x,k='',patient=None,days=0,monthfirst=False,path=()):
+    def value(self,x,k='',patient=None,days=0,monthfirst=False,path=(),suppress_quasi=False):
         typ=kind(k)
         if isinstance(x,dict):
             if norm(k)=='byname':
-                return {f'entry_{i}':self.value(v,'patientref',patient,days,monthfirst,path+(k,)) for i,v in enumerate(x.values())}
+                return {f'entry_{i}':self.value(v,'patientref',patient,days,monthfirst,path+(k,),suppress_quasi) for i,v in enumerate(x.values())}
             if x.get('resourceType') in ('Practitioner','Organization'):
                 path=path+(x['resourceType'],)
             if x.get('resourceType')=='Bundle':
@@ -109,10 +229,10 @@ class Sanitizer:
                 elif a=='valueString' and any(word in str(x.get('url','')).casefold() for word in ('mother','father','guardian','relative','name')):
                     out[key]=self.redact()
                 else:
-                    out[key]=self.value(b,a,patient,days,monthfirst,path+(k,))
+                    out[key]=self.value(b,a,patient,days,monthfirst,path+(k,),suppress_quasi)
             return out
         if isinstance(x,list):
-            return [self.value(v,k,patient,days,monthfirst,path) for v in x]
+            return [self.value(v,k,patient,days,monthfirst,path,suppress_quasi) for v in x]
         if x is None or isinstance(x,bool) or x=='': return x
         # FHIR structural UUIDs are transformed atomically by the bundle guard;
         # generic numeric regexes must not partially corrupt these references.
@@ -139,18 +259,33 @@ class Sanitizer:
         if typ=='' and norm(k) in ('district','jila') and self.policy.get('location_level')=='suppressed':
             self.generalized+=1
             return self.redact()
-        if isinstance(x,str): return self.text(x,patient,days,monthfirst)
+        if typ=='district':
+            if suppress_quasi or self.policy.get('location_level')=='suppressed':
+                self.generalized+=1
+                self.suppressed+=1
+                return self.redact() if isinstance(x,str) else None
+            return x
+        if isinstance(x,str): return self.text(x,patient,days,monthfirst,suppress_quasi)
         return x
 def alias_patterns(items):
     names=set()
+    full_names=set()
     def visit(x,k=''):
         if isinstance(x,dict):
             for a,b in x.items(): visit(b,a)
         elif isinstance(x,list):
             for v in x: visit(v,k)
         elif isinstance(x,str):
-            if kind(k) in ('name','relative') and 3<=len(x)<=80: names.add(x.strip())
+            if kind(k) in ('name','relative') and 3<=len(x)<=80:
+                value=x.strip()
+                names.add(value)
+                if norm(k) not in {'first','firstname','given','givenname','last','lastname','family','familyname','surname'}:
+                    full_names.add(value)
+                names.update(p for p in re.findall(r'[^\W\d_]+',value, re.UNICODE) if len(p)>=3)
             for m in LABEL.finditer(x):
-                if norm(m[1]) in ('name','patientname','नाम','relative name','guardian','so','wo','do'): names.add(m[2].strip())
+                if norm(m[1]) in ('name','patientname','नाम','relative name','guardian','so','wo','do'):
+                    value=m[2].strip()
+                    names.add(value)
+                    full_names.add(value)
     for x in items: visit(x)
-    return [re.compile(r'(?<!\w)'+re.escape(n)+r'(?!\w)',re.I) for n in sorted(names,key=lambda n:(-len(n),n)) if len(n)>2 and not re.search(r'\d|\[|\n',n)]
+    return AliasPatterns(names,full_names)

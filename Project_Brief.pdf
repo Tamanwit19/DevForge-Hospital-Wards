@@ -1,95 +1,93 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+<<
+/Contents 9 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 8 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+<<
+/Contents 10 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 8 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 6 0 obj
-<< /Length 2402 >>
-stream
-0.04 0.10 0.17 rg 0 780 595 62 re f
-BT /F2 23 Tf 1 1 1 rg 48 806 Td (RAKSHA / SECRET WARDS) Tj ET
-BT /F2 9 Tf 0.15 0.49 0.51 rg 48 754 Td (TRACK 3  |  PRIVACY ENGINEERING  |  HARDENED PROTOTYPE) Tj ET
-BT /F2 15 Tf 0.04 0.25 0.34 rg 48 712 Td (01  Mission) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 687 Td (Transform heterogeneous synthetic hospital exports into privacy-protected) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 671 Td (research files while preserving medical facts and clinical intervals.) Tj ET
-BT /F2 15 Tf 0.04 0.25 0.34 rg 48 629 Td (02  Pipeline) Tj ET
-0.88 0.95 0.95 rg 44 597 507 25 re f
-BT /F2 11 Tf 0.04 0.25 0.34 rg 48 604 Td (Hospital exports  >  Parse & validate  >  Detect identifiers) Tj ET
-0.88 0.95 0.95 rg 44 572 507 25 re f
-BT /F2 11 Tf 0.04 0.25 0.34 rg 48 579 Td (Explicit ID matching  >  Keyed pseudonyms  >  Privacy rules) Tj ET
-0.88 0.95 0.95 rg 44 547 507 25 re f
-BT /F2 11 Tf 0.04 0.25 0.34 rg 48 554 Td (UTF-8 sanitized files  +  report.json  +  records.jsonl) Tj ET
-BT /F2 15 Tf 0.04 0.25 0.34 rg 48 512 Td (03  Implementation) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 487 Td (Ingestion: CSV, TSV, JSON and text; UTF-8, UTF-16 and legacy encodings.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 471 Td (Unsupported or malformed files are excluded and reported.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 446 Td (Detection: structured field labels, contextual patterns and input-derived) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 430 Td (aliases, including selected Hindi and Hinglish labels.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 405 Td (Linkage: verified internal identifiers, exact duplicate reconciliation.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 389 Td (Keyed HMAC pseudonyms; conflicting records are not merged.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 364 Td (Privacy: age bands, masked postal codes, direct identifier redaction,) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 348 Td (opaque filenames and consistent date shifts for linked records.) Tj ET
-BT /F2 15 Tf 0.04 0.25 0.34 rg 48 306 Td (04  Distinguishing features) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 281 Td (Offline operation, fail-closed quarantine, deterministic exports,) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 265 Td (Keyed FHIR UUIDs and aggregate-only privacy diagnostics.) Tj ET
-BT /F1 9 Tf 0.35 0.4 0.45 rg 48 30 Td (RAKSHA  /  Hardened prototype                                       1 / 2) Tj ET
-endstream
+<<
+/PageMode /UseNone /Pages 8 0 R /Type /Catalog
+>>
 endobj
 7 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 8 0 R >>
+<<
+/Author (\(anonymous\)) /CreationDate (D:20261126235838+05'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20261126235838+05'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+>>
 endobj
 8 0 obj
-<< /Length 2449 >>
+<<
+/Count 2 /Kids [ 4 0 R 5 0 R ] /Type /Pages
+>>
+endobj
+9 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 1531
+>>
 stream
-0.04 0.10 0.17 rg 0 780 595 62 re f
-BT /F2 23 Tf 1 1 1 rg 48 806 Td (EVALUATION & LIMITS) Tj ET
-BT /F2 9 Tf 0.15 0.49 0.51 rg 48 754 Td (PRACTICE DATA  |  ORGANIZER SELF-CHECK  |  NOT OFFICIAL SCORE) Tj ET
-BT /F2 15 Tf 0.04 0.25 0.34 rg 48 712 Td (05  Measured results) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 687 Td (Files processed: 200   |   Sanitized: 193   |   Quarantined: 7) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 662 Td (Medical values retained: 4855 / 4855 \(100% of checked probes\).) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 646 Td (Direct-identifier findings: 0 / 3230; canaries remaining: 0 / 4.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 621 Td (Linkage precision: 1.00   |   Recall: 0.89   |   F0.5: 0.98) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 605 Td (Runtime: 3.38 seconds   |   Peak memory: 25.61 MB) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 580 Td (Contract validator: PASS   |   Unit tests: 28 / 28) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 564 Td (Repeat run: sanitized files and record mappings are byte-identical.) Tj ET
-BT /F2 15 Tf 0.04 0.25 0.34 rg 48 522 Td (06  Privacy and security design) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 497 Td (The pipeline keeps raw data in memory and does not copy raw files.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 481 Td (Secrets are scoped to runtime; an optional AES-GCM archive is provided.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 456 Td (Deploy on encrypted storage with restricted access and encrypted or) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 440 Td (disabled swap. Source-volume encryption is an operational prerequisite.) Tj ET
-BT /F2 15 Tf 0.04 0.25 0.34 rg 48 398 Td (07  Trade-off and limitations) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 373 Td (Conservative matching prioritizes avoiding false merges. Sparse) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 357 Td (cohorts remain a concern despite zero known identifier findings.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 332 Td (Full cross-script matching, official FHIR schema validation, and) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 316 Td (formal privacy guarantees remain unverified on hidden data.) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 291 Td (The system is not approved for real medical data. A passing format) Tj ET
-BT /F1 11 Tf 0.12 0.18 0.24 rg 48 275 Td (contract is not evidence of anonymity.) Tj ET
-BT /F1 9 Tf 0.35 0.4 0.45 rg 48 30 Td (RAKSHA  /  Hardened prototype                                       2 / 2) Tj ET
-endstream
+Gatm:?#T!f&:O#NQq)<'+eK=Q;Pb/-g>.,1DP=\g-?4XHM4N?1/Z\j?3th_p\.\Q$$<77mYs":,kF>*D55k`AB3#+>/n&u>5S1f<J0=Pp=FPhso'H0g(J-&0nOC.f?C6IE&qLin7fG@N0Cb5_%7->f+kW>,qhZ-/d0Kg/?:42PiU2d&mIY9SLES52dtd`3rk<WE/H?Rt+oDM0s1n2,9(44*4rfd'GT:sB3_?SY%!_b"*6/A1_'gB%,Oe$Dr@tnp0kDA3Kb27'I[F%+8`G`(.)k[25>oqDQGJ@L?"KXD90Ul!6c^6^6d0t63Ru\bC6h"K"TQ<O()rQV@4k1r3S-T`Gk\?h._LFH(G1=&0<D0;+SWF\BRHcIF!uin!nM#qCCkWbGGOHu!IPX%#UPNH1E*+Y1Bqh1N%%[>6t69M9]F/Q$,_Udm,@5Y(0tZKHJ+0*#:;_s@/;RjIiKk>D81W-m$_)(]N,thT]+TQaXRk-:qC6Sl\7a,)V3\aX\(4VC(6Q4[!5)OE$KG?%aR'&4[4`M'5ZD2o[_/A_W#9uB1h?aO4h)&RPJGVQcLj]YfpR0+\&<HP:^!=*1lqkkKk(&k"9N,=s.lk.k98Q$jNuB<gpI2PdY\5l&ld/?]3gl:l'uJmjRmLI(F3NE1sVGYWT7ok/YmsPK=,8Nkblc3!q"g6XT;5kHBQ!JTI1bP@9Al+4eZ;4#D$F9$T/7ca;Xb?2QQbirAJ*]A'%@YEj?OH4gcLQW=e%fmu)s#l-k9=!A:npkGNr-eQc(U1o^,Y)h1A0;e3,l*<+g_5p)QQ+(.!=Re'56GtY(._7`tH&YB:QWJeRBiK(aONj6C@s)Q-[J%^h2/=-&K]=(K`l[I+*pl5hNl%"$5Gc5`CBSQk/?^3qoa3Qo5a#R_[2`2BgQ$j\+B)9E9@,9UTT>!W[C5Hj=gf'oe4EUc3>BJeCg&pAd9&>P%%`2uS,Rb[:I9Pq30jm#rX_<;8g'r[[c/#Ci>_k.ipSp#e<;bqBQ,b[L06>H9%U-Zg:">VS]3I_H-oZ>X)JiM$Fmb;6]T%PIj>qE<LR'e[uOI?Pu8K.@)K#<43C@sdHPleGIh2D;:3GS:\];WrW!<s#;RO1K=iLEP.\$<!iaOTBV=ts(LbpGBVS/Xk`i1:jAb*$N>(49ma?_<bt@7:Ee'Gm>k6[-2aco9[km`iJ&=Rgq4Md=f@PsBYhofSA(iOQ_WAMZ]>\j76+rr`4d^/D.\0#T&n)9,ZSg(#LmfV'db*A#Eb)b^I&\HP4Hq(ffio-X7r_Y0\Lr0qBZ=2``m$tQ7!.T9oYgu.-[*S?o:1@fZMVW.4#8ukXuJQ&=@iuU5#f/Q=f[84*_RT7:H;a-(F>g(ifmQE<p#4V$4A!X.mk5Q6%Z%LU0QPe">YJG_;;`8$ZoF1)j."P3[QGlNGqU0+RlBApGY$`'kd/6GCZ=*[pu'mS:9MWDUJX`#e#kO\rY<U%*#KRD]\DJ5[Ijuh8";`]U?<A3t=7pB_LFjmu:hak(u#4<,9U%n5X*cHTnnYcMe'-f5,=~>endstream
+endobj
+10 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 1311
+>>
+stream
+Gatm:gMZ%0&:O:SbY&!*@]PU?]mWKm]?M\7cJ!#k!rKi*Pg,1U3>.U2qt1up(-,S:#Z)AHW8Yr\1Z\&P'F9/$o,Him<tS]=-r:+F$Il=#M!eXgc(8P'9OK26bNnL1$^g>8@+h5DquA:7\3[p'gmJ/rTf^3#Qt(J.0g(6eeRj6Ar4H-=0Auu@bJe'2_-`OulR`*($[W-+2i-<0JhKYX^]`R#^(gcZJB@dEjk7Q$e''!Wo,SVul8_&u^gc^.Bjq3]PL.:+!O\D[S&4=^S'+6BZWP(VH+1HA/l*)uoD6]%ColA9cBp_5$'*DbUmONj>UMAXaop[D3A,lTW=PhUoK@eo:Hsi^F?48m%])@T&@u3+iED$9#p'Q%iXtlB]YHZ8k65ckF6P\AgNd;2r[WKHlpJCaAetQmD75RMrAiSIlop2nBl(R\Jld(D7b]tE2#K#0Iu7.$;C"e8eX8T1BhlTL9'14T/")7Z%,p,86Q7MXUmD$'lNR(Q<:c8'/X8m+)Z[d4hhBsfik'g>Ri=np8u113,9<Ka'%tJU;tqO#*#DlM;Mkh0U/hrl)!E-Y+?NN+^--:',%I4\1XBe=088Q;jVn%?ddd9j,&gi_3Y)=NrUfd='VF]6;0Po$o%f]<(d.7[&^*c^$E-B%dmd`>=oYocFdhh7V&f7=^p?YKU#`JEZ%-)D]5nE9`(_F3ep4?4IAf$AL!g0R)KU^:X?T3Eia@0r\Q#-c7dRANRg#a*WR!/!^E_7p#6c\/?,;)%YhG)RN-]rkn$e_HiT7mBY^Ac)O5_s7D!Jgu[i&Y'+651q:;%NVY\gJ;Z]PpEfVb;=1",9$B>r8+71npg3#\lsSXgKc]bL^V2<(:<Te*W1*:u.R^=J$khM-X6g2JaMpcXJkfr3fjDOu:E?XDPNGiQ=XS%9#*4o`"7&-KB66S@+?G]*.-jr.SRY=4WU-0#DIVsDR([Vu-uoWiq/JC?BSdFGJM<P(gHg'c7rOZc<rI5kb9ek1c3><b>_6DIlPI47X`%-K/5O(3"b[*Gu;09Di6R7ehVoRNZ!4)%Q$W'K=dnOLMG5Tfjfk(uc1;$s/Y;&k^.'Z8m@Z3pb7F@4+P2_*:DUbXZMOUS;b!Otbk+3*F8h[lnuqo@6bS&bZ4Zl2]mS<r8NROb=g6=n2ERsarc8VD[>78Sj;.?&dtD)+Ip;_bA&^Y(jemmYO<TW(7&,'%)6;Dfj^)*_S1%J^D)%T!(aCQj9rk4'%.S`'(*La86GfqgTs%k*5k8m>:;$uTWWW.\c<e.-C?OX1a\>T%"8"TFM)C6/0*lBk4mZsIkebl.d5c^YX~>endstream
 endobj
 xref
-0 9
+0 11
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000121 00000 n 
-0000000191 00000 n 
-0000000266 00000 n 
-0000000402 00000 n 
-0000002856 00000 n 
-0000002992 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000524 00000 n 
+0000000728 00000 n 
+0000000796 00000 n 
+0000001076 00000 n 
+0000001141 00000 n 
+0000002763 00000 n 
 trailer
-<< /Size 9 /Root 1 0 R >>
+<<
+/ID 
+[<9a374c20a9aa3d5ad10c3e9e28b6c921><9a374c20a9aa3d5ad10c3e9e28b6c921>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 7 0 R
+/Root 6 0 R
+/Size 11
+>>
 startxref
-5493
+4166
 %%EOF
