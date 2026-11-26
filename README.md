@@ -37,8 +37,14 @@ python ".\check_local.py" --output ".\out_test"
 Use a new, empty output folder each run. `check_local.py` is a Windows-only
 diagnostic for verified CRLF-to-LF changes in the cloned practice data; it
 adjusts a temporary truth copy and does not change inputs or the submission
-pipeline. The official validator checks output format, while `check_local.py`
-measures practice leakage and utility. Neither predicts hidden-data performance.
+pipeline. On this checkout it verified 172 such line-ending differences.
+Running the original `check_dev.py` directly against this Windows clone can
+mis-map renamed output files because the input hashes no longer match the
+toolkit's stored truth hashes, which can skew its practice metrics. Use
+`check_local.py` for the Windows practice score; it invokes the original checker
+with only a temporary, hash-corrected truth copy. The official validator checks
+output format. These local tools do not predict hidden-data performance or
+change the judge's evaluation.
 
 The evaluator provides `RAKSHA_SECRET` at runtime. Never commit it or use the
 public practice value for real data. Real deployment requires a separately
