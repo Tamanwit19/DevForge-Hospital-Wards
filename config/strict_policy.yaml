@@ -1,0 +1,7 @@
+# Extra-conservative optional profile for a more restricted release.
+age_band_width: 10
+age_top_code: 80
+date_shift_days: 365
+location_level: suppressed
+rare_value_k: 5
+max_file_mb: 20

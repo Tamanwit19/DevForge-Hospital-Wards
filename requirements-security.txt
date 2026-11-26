@@ -1,0 +1,2 @@
+# Optional offline archive utility (not required for challenge CLI)
+cryptography>=42,<47

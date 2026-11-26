@@ -1,0 +1,8 @@
+.venv/
+.idea/
+__pycache__/
+output*/
+Secret-Wards-ToolKit/
+*.pyc
+.env
+CODEBASE_EXPLAINED.md

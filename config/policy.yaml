@@ -1,0 +1,7 @@
+# Privacy rules (tunable without touching code)
+age_band_width: 5          # years; band always contains true age
+age_top_code: 90           # 90+ collapsed
+date_shift_days: 180       # per-patient shift in [-180, 180]; stay length preserved
+location_level: district   # village -> district; PIN -> first 3 digits
+rare_value_k: 5            # threshold for aggregate release-risk diagnostic
+max_file_mb: 20
