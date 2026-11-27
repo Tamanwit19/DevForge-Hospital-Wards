@@ -36,13 +36,13 @@ The published scoring categories are:
 | Run offline without hosted AI or downloaded models | Local Python rules and dependencies; no model service is part of the run path | `requirements.txt`; submission harness passes | The evaluator still needs to run the submission in its own no-network sandbox |
 | Parse heterogeneous records and encodings | CSV, TSV, JSON and text parser; UTF-8/BOM, UTF-16 and legacy decoding; strict parse checks | Practice set runs; malformed/unsupported items are quarantined | XML, PDF, images and other unsupported formats are not parsed |
 | Find direct PII in English, Hindi and Hinglish | Field classification, contextual patterns, input-derived aliases and cross-script name normalization | 0 of 3,230 practice PII pieces found in output across the local check | Hidden names, labels and formats may differ; practice results do not prove complete recall |
-| Keep clinical meaning | Context-aware sanitization aims to retain diagnoses, drugs, doses, vitals and lab values | 4,770 of 4,855 practice preservation probes retained (98.2%) | 85 probes were not found in output. Full clinical preservation is therefore not demonstrated |
-| Link records for the same person | Explicit identifiers, unique contacts, matching names with relative/DOB/village-age evidence, and date-aware age checks | Practice precision 1.00, recall 1.00, F0.5 1.00; zero false practice merges | These are visible practice metrics only; hidden homonym and language traps remain untested |
+| Keep clinical meaning | Context-aware sanitization aims to retain diagnoses, drugs, doses, vitals and lab values | 4,746 of 4,855 practice preservation probes retained (97.8%) | 109 probes were not found in output. Full clinical preservation is therefore not demonstrated |
+| Link records for the same person | Explicit identifiers, unique contacts, matching names with relative/DOB/village-age evidence, and date-aware age checks | Practice precision 1.00, recall 0.83, F0.5 0.96; zero false practice merges | These are visible practice metrics only; hidden homonym and language traps remain untested |
 | Protect against quasi-identifier attacks | Age bands, keyed date shifts, PIN reduction, sparse-cohort district suppression | Privacy audit reports aggregate counts without printing identities | Audit coverage is partial: 93 registration rows, 89 with district suppressed, 0 complete cohorts measured. This is not an attack score or proof of anonymity |
 | Protect data and keys at rest | HMAC keys are read from the environment; an optional helper can encrypt a reviewed release archive | `crypto.py`, `secure_archive.py` and the [security checklist](SECURITY.md) | Partial: the pipeline does not encrypt source data or intermediate storage in place. Encrypted volumes, key management and access controls are deployment responsibilities |
 | Export valid, auditable output | Sanitized UTF-8 files, file-hash report, record map, sensitive-path renaming and quarantine status | Toolkit validator reports `CONTRACT OK`; submission harness reports `READY TO SUBMIT` | The practice contract check does not validate every hidden schema or every side channel in the organizer's full environment |
 | Preserve FHIR bundle structure | UUID re-keying, attachment cleanup and local-reference checks | Focused FHIR unit tests pass; bundles pass the local structural guard | The guard is not a full HL7 FHIR R4/profile validator; official schema validation is unavailable here |
-| Demonstrate reliability and repeatability | Deterministic processing and keyed pseudonyms/date shifts | 41 tests pass; submission harness confirms same-key determinism, changed-key variation and input immutability | The harness is not a substitute for the official timed, memory-limited hidden-data run |
+| Demonstrate reliability and repeatability | Deterministic processing and keyed pseudonyms/date shifts | 47 tests pass; submission harness confirms same-key determinism, changed-key variation and input immutability | The harness is not a substitute for the official timed, memory-limited hidden-data run |
 | Address fairness and subgroup risk | The project reports aggregate coverage and known limits | Privacy audit output is aggregate-only and explicitly reports partial coverage | No independent subgroup fairness certification or hidden-population risk study is available |
 
 ## What the practice results mean
@@ -65,7 +65,7 @@ privacy or fairness.
    attacker/evaluator.
 2. Validate every FHIR bundle against the official R4 schema and applicable
    profiles when those resources are available.
-3. Review the privacy/utility trade-off behind the 85 missing practice probes
+3. Review the privacy/utility trade-off behind the 109 missing practice probes
    before making any claim that all clinical facts are retained.
 4. Reassess re-identification and subgroup risk with the complete evaluator and
    its population data; the current aggregate audit cannot measure suppressed

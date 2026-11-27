@@ -49,6 +49,10 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(result['contentType'],'text/plain')
         self.assertEqual(base64.b64decode(result['data']),b'[ATTACHMENT REMOVED]')
     def test_optional_local_schema(self):
+        try:
+            import jsonschema
+        except ImportError:
+            self.skipTest('jsonschema is optional')
         from validate_fhir_schema import validate_release_schema
         with tempfile.TemporaryDirectory() as t:
             root=Path(t);f=root/'sanitized'/'fhir';f.mkdir(parents=True)

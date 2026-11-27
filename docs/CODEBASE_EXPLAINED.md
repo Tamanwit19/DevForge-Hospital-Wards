@@ -213,12 +213,12 @@ the challenge pipeline. Do not treat it as the official hidden-data evaluator.
 
 The latest visible practice run processed 200 files: 193 sanitized and 7
 quarantined. The local checker found 0 of 3,230 known PII pieces and 0 of 4
-canaries, retained 4,770 of 4,855 preservation probes, and measured linkage
-precision/recall/F0.5 of 1.00/1.00/1.00 with zero false merges. The regression
-suite has 41 passing tests, and the toolkit submission harness reports
+canaries, retained 4,746 of 4,855 preservation probes, and measured linkage
+precision/recall/F0.5 of 1.00/0.83/0.96 with zero false merges. The regression
+suite has 47 passing tests, and the toolkit submission harness reports
 `READY TO SUBMIT`.
 
-The 85 missing preservation probes are a real utility gap. The aggregate audit
+The 109 missing preservation probes are a real utility gap. The aggregate audit
 examined 93 registration rows but found no complete age/location cohorts, so
 its coverage is partial and it cannot establish anonymity. The full attacker,
 hidden data and official FHIR R4 schema are not present in the local toolkit.

@@ -1,3 +1,5 @@
 PyYAML>=6,<7
 psutil>=5,<8
 indic-transliteration>=2.3,<3
+jsonschema>=4,<5
+cryptography>=43,<44

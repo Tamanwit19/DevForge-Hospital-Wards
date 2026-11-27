@@ -47,7 +47,11 @@ _TEXT_PATIENT_NAMES = (
 
 
 def patient_identifier(identifier):
-    return identifier.startswith(('uhid', 'jjh', 'snj', 'dhh')) and 'ipd' not in identifier
+    if encounter_identifier(identifier):
+        return False
+    if identifier.startswith(('contact:', 'contact-text:', 'opd', 'pol', 'pmjay')):
+        return False
+    return bool(re.fullmatch(r'[a-z]{2,}[/-]?[a-z0-9/-]{3,}', identifier))
 
 
 def encounter_identifier(identifier):

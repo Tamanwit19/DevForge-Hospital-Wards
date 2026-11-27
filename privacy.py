@@ -4,11 +4,39 @@ from datetime import datetime, timedelta
 from crypto import pseudonym, date_shift_days, token
 from identity_normalization import canonical_tokens
 
-ID = re.compile(r'(?i)\b(?:UHID[-/]\d+|JJH-\d+|SNJ[-/]\d{2}[-/]\d+|DHH(?:-IPD-\d+|\d{4}-\d+)|ADM\d+|IP[-/]\d{2}[-/]\d+|IPD-\d{4}-\d+|OPD/\d+/\d+/\d+|PMJAY-[A-Z]+-\d+|POL/\d+/\d+|[A-Z]{5}\d{4}[A-Z])\b')
-PHONE = re.compile(r'(?<!\w)(?:\+91[ -]?)?(?:\d{5}[ -]?\d{5}|[6-9\u0966-\u0969]\d{9})(?!\w)')
+ID = re.compile(
+    r'(?i)\b(?:'
+    r'UHID[-/]\d+|JJH-\d+|SNJ[-/]\d{2}[-/]\d+|DHH(?:-IPD-\d+|\d{4}-\d+)'
+    r'|ADM\d+|IP[-/]\d{2}[-/]\d+|IPD-\d{4}-\d+|OPD/\d+/\d+/\d+'
+    r'|PMJAY-[A-Z]+-\d+|POL/\d+/\d+|[A-Z]{5}\d{4}[A-Z]'
+    r'|[A-Z]{2,}[/-]?[0-9][A-Z0-9/-]{4,}'
+    r')\b'
+)
+PHONE = re.compile(
+    r'(?<!\w)(?:'
+    r'\+91[\s-]?[6-9\u0966-\u0969]\d{9}'
+    r'|0(?:[1-9]\d{1,2})[\s-]?\d{6,8}'
+    r'|[6-9\u0966-\u0969]\d{9}'
+    r'|\d{5}[\s-]?\d{5}'
+    r')(?!\w)'
+)
+PLAIN_ID = re.compile(r'(?<!\d)[0-9\u0966-\u096f]{6,7}(?!\d)')
 OTHER = re.compile(r'(?i)(?<!\w)(?:\d{4}[ -]?\d{4}[ -]?\d{4}|\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{2}|\d{2}-\d{4}-\d{4}-\d{4}|XXXX[ -]?XXXX[ -]?\d{4}|[\w.+-]+@[\w.-]+)(?!\w)')
-DATE = re.compile(r'\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}[-/]\d{1,2}[-/]\d{4})\b')
-LABEL = re.compile(r'(?im)(\b(?:patient\s*name|name|relative name|guardian|attendant|address|village|gram|district|jila|tehsil|mobile|mob\.?|phone|aadhaar|aadhar|abha|dob|s/o|d/o|w/o)\s*[:.]?\s+|(?:नाम|ग्राम|पता|जिला|तहसील|मोबाइल|जन्म तिथि)\s*:\s*)([^\n\r]*?)(?=\s{2,}|[,;]|\r?$|\s+(?:Age|Sex|Reg No|UHID|Mob|BP|आयु)\s*[:/])')
+DATE = re.compile(
+    r'(?i)\b(?:'
+    r'\d{4}-\d{2}-\d{2}'
+    r'|\d{1,2}[-/]\d{1,2}[-/]\d{4}'
+    r'|\d{1,2}(?:st|nd|rd|th)?\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|'
+    r'may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)'
+    r'\s+\d{4}'
+    r'|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|'
+    r'aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)'
+    r'\s+\d{1,2}(?:st|nd|rd|th)?(?:,)?\s+\d{4}'
+    r'|(?:०?\d{1,2}|[\d]{1,2})\s+(?:जनवरी|फ़रवरी|फरवरी|मार्च|अप्रैल|मई|जून|जुलाई|'
+    r'अगस्त|सितम्बर|सितंबर|अक्टूबर|नवम्बर|नवंबर|दिसम्बर|दिसंबर)\s+\d{4}'
+    r')\b'
+)
+LABEL = re.compile(r'(?im)(\b(?:patient\s*name|name|relative name|guardian|attendant|address|village|gram|district|jila|tehsil|mobile|mob\.?|phone|telephone|mrn|medical\s*record(?:\s*number)?|patient\s*id|hospital\s*id|reg(?:istration)?(?:\s*no\.?)?|ipd(?:\s*no\.?)?|aadhaar|aadhar|abha|dob|s/o|d/o|w/o)\s*[:.]?\s+|(?:नाम|ग्राम|पता|जिला|तहसील|मोबाइल|जन्म तिथि|पंजीकरण संख्या)\s*:\s*)([^\n\r]*?)(?=\s{2,}|[,;]|\r?$|\s+(?:Age|Sex|Reg No|UHID|Mob|BP|आयु)\s*[:/])')
 AGE = re.compile(r'(?i)(\b(?:age(?:/sex)?|umar)\s*:\s*|आयु\s*:\s*)(\d{1,3})')
 RELATIVE_PAIR = re.compile(
     r'(?i)(?P<patient>[\w\u0900-\u097f.\-]+(?:[ \t,]+[\w\u0900-\u097f.\-]+){0,2})[ \t]*,?[ \t]+'
@@ -54,16 +82,36 @@ def band(n,width=5,top=90):
     return f'{top}+' if n>=top else f'{n//width*width}-{min(top-1,n//width*width+width-1)}'
 def shift(m,days,monthfirst=False):
     s=m.group()
-    for fmt in (['%Y-%m-%d','%m/%d/%Y','%d/%m/%Y','%d-%m-%Y'] if monthfirst else ['%Y-%m-%d','%d/%m/%Y','%m/%d/%Y','%d-%m-%Y']):
-        try: return (datetime.strptime(s,fmt)+timedelta(days=days)).strftime(fmt)
+    formats=[
+        '%Y-%m-%d','%d %B %Y','%d %b %Y','%B %d, %Y','%b %d, %Y',
+        '%d %B %Y','%d %b %Y','%d/%m/%Y','%m/%d/%Y','%d-%m-%Y','%d.%m.%Y'
+    ]
+    if monthfirst:
+        formats=['%Y-%m-%d','%m/%d/%Y','%d/%m/%Y','%d-%m-%Y','%d.%m.%Y',
+                  '%d %B %Y','%d %b %Y','%B %d, %Y','%b %d, %Y']
+    for fmt in formats:
+        try:
+            shifted=(datetime.strptime(re.sub(r'(?i)(\d{1,2})(st|nd|rd|th)\b',r'\1',s),fmt)+timedelta(days=days))
+            if fmt.startswith('%d '):
+                day=shifted.day
+                suffix='th' if 11<=day<=13 else {1:'st',2:'nd',3:'rd'}.get(day%10,'th')
+                if re.search(r'(?i)\d+(st|nd|rd|th)',s):
+                    return shifted.strftime('%d').lstrip('0')+suffix+' '+shifted.strftime('%B %Y')
+                return shifted.strftime('%d %B %Y')
+            if fmt.startswith('%B ') or fmt.startswith('%b '):
+                return shifted.strftime('%B %d, %Y')
+            return shifted.strftime(fmt)
         except ValueError: pass
     return '[DATE]'
 
 def _phone_digits(value):
     digits=''.join(str(unicodedata.digit(char)) for char in str(value) if char.isdecimal())
     if len(digits)==12 and digits.startswith('91'): digits=digits[2:]
-    elif len(digits)==11 and digits.startswith('0'): digits=digits[1:]
-    return digits if len(digits)==10 and digits[0] in '6789' else ''
+    if len(digits)==11 and digits.startswith('0'): return digits
+    if len(digits)==10 and digits.startswith('0'): return digits
+    if len(digits)==10 and digits[0] in '6789': return digits
+    if len(digits)>=7 and len(digits)<=8: return digits
+    return ''
 
 def evidence(obj):
     """Only explicit hospital identifiers; never infer identity from public registries."""
@@ -126,6 +174,23 @@ class Sanitizer:
         self.detected+=1
         return replacement
     def text(self,s,patient=None,days=0,monthfirst=False,suppress_quasi=False):
+        s=re.sub(
+            r'((?:मरीज़|रोगी|मरीज)\s*का\s*नाम)\s*[^\n\r,;.!?]{2,80}',
+            lambda m:m.group(1)+' '+self.redact(patient or '[NAME]'),
+            s
+        )
+        s=re.sub(
+            r'(?i)\b(her|his)\s+(son|daughter|wife|husband)\s+'
+            r'([\w\u0900-\u097f][\w\u0900-\u097f.\-]*'
+            r'(?:[\s]+[\w\u0900-\u097f][\w\u0900-\u097f.\-]*){0,2})',
+            lambda m:m.group(1)+' '+m.group(2)+' '+self.redact(patient or '[NAME]'),
+            s
+        )
+        s=re.sub(
+            r'(?m)((?:मरीज़|रोगी|मरीज)\s+का\s+नाम\s*)([^\n\r,;]{2,80})',
+            lambda m:m.group(1)+self.redact(patient or '[NAME]'),
+            s
+        )
         def relation_names(match):
             patient_name=match.group('patient')
             relative_name=match.group('relative')
@@ -171,6 +236,7 @@ class Sanitizer:
         s=re.sub(r'(?im)(\baddress\s*[:.]?\s+)[^\r\n]+',lambda m:m[1]+self.redact(),s)
         s=LABEL.sub(label,s)
         s=ID.sub(lambda m:self.redact(patient or '[ID]'),s)
+        s=PLAIN_ID.sub(lambda m:self.redact(patient or '[ID]'),s)
         s=OTHER.sub(lambda m:self.redact(),s)
         s=PHONE.sub(lambda m:self.redact(),s)
         def age(m):
@@ -206,6 +272,33 @@ class Sanitizer:
             for left,right in sorted(selected,reverse=True):
                 s=s[:left]+self.redact(patient or '[NAME]')+s[right:]
         s=re.sub(r'(?i)(?<!\w)[^\W\d_]+(?=\s+(?:sahab|bhai|behenji|amma|didi|ji|babu)\b)',lambda m:self.redact(patient or '[NAME]'),s)
+        honorific_name=re.compile(
+            r'(?i)(?<!\w)(?:mr|mrs|ms|miss|smt|shrimati|shr?i|pt)\.?\s+'
+            r'([A-Z\u0900-\u097f][\w\u0900-\u097f-]*(?:\s+[A-Z\u0900-\u097f][\w\u0900-\u097f-]*){0,2})'
+        )
+        s=honorific_name.sub(
+            lambda m:m.group(0).split()[0]+' '+self.redact(patient or '[NAME]')
+            if m.group(0).lower().startswith(('dr','doctor'))
+            else self.redact(patient or '[NAME]'),
+            s
+        )
+        s=re.sub(
+            r'(?i)\b(?:her|his)\s+(?:son|daughter|wife|husband)\s+'
+            r'([\w\u0900-\u097f][\w\u0900-\u097f.\-]*(?:[\s]+[\w\u0900-\u097f][\w\u0900-\u097f.\-]*){0,2})',
+            lambda m:re.sub(r'\b'+re.escape(m.group(1))+r'\b',self.redact(patient or '[NAME]'),m.group()),
+            s
+        )
+        s=re.sub(
+            r'(?m)(?<![\w])(?:मरीज़|रोगी|मरीज)(?:\s+का\s+नाम|\s*का\s*नाम)\s*(?:है)?\s*[:=]?\s*'
+            r'([^\n,;]{2,80})',
+            lambda m:m.group(0).replace(m.group(1),self.redact(patient or '[NAME]')),
+            s
+        )
+        s=re.sub(
+            r'(?m)(?:पति|पत्नी|पिता|माता|guardian)\s*[:=]\s*([^\n,;]{2,80})',
+            lambda m:m.group(0).replace(m.group(1),self.redact()),
+            s
+        )
         s=re.sub(r'(?im)(\b(?:address|ग्राम|पता)\s*:\s*)[^\r\n]+',lambda m:m[1]+self.redact(),s)
         return s
     def value(self,x,k='',patient=None,days=0,monthfirst=False,path=(),suppress_quasi=False):
@@ -228,6 +321,14 @@ class Sanitizer:
                     out[key]=self.redact(patient or '[NAME]') if isinstance(b,str) else b
                 elif a=='valueString' and any(word in str(x.get('url','')).casefold() for word in ('mother','father','guardian','relative','name')):
                     out[key]=self.redact()
+                elif norm(a)=='div' and isinstance(b,str):
+                    cleaned=self.value(b,a,patient,days,monthfirst,path+(k,),suppress_quasi)
+                    out[key]=re.sub(
+                        r'(?i)<div\b[^>]*>',
+                        '<div xmlns="http://www.w3.org/1999/xhtml">',
+                        cleaned,
+                        count=1
+                    )
                 else:
                     out[key]=self.value(b,a,patient,days,monthfirst,path+(k,),suppress_quasi)
             return out
@@ -241,10 +342,14 @@ class Sanitizer:
                 return x
         if norm(k)=='text' and 'name' in tuple(map(norm,path)) and isinstance(x,str):
             return self.redact(patient or '[NAME]')
-        if norm(k)=='div' and 'patient' in tuple(map(norm,path)) and isinstance(x,str):
+        if norm(k)=='div' and isinstance(x,str):
             # Keep the XHTML wrapper and generalize demographic narrative.
             x=re.sub(r'(?i)(<div\b[^>]*>)[^<,]+(?=,)',lambda m:m[1]+self.redact(patient or '[NAME]'),x,count=1)
             x=re.sub(r'(?i)\b(\d{1,3})\s*(yrs?|years?)\b',lambda m:band(int(m[1]),self.policy.get('age_band_width',5),self.policy.get('age_top_code',90))+' '+m[2],x)
+            x=ID.sub(lambda m:self.redact(patient or '[ID]'),x)
+            x=PLAIN_ID.sub(lambda m:self.redact(patient or '[ID]'),x)
+            x=PHONE.sub(lambda m:self.redact(),x)
+            return x
         if typ=='name' and any(norm(i) in ('facility','panels','results','organization','practitioner') for i in path): typ=''
         if typ in ('name','id','relative','private','location','dob'):
             if isinstance(x,(int,float)): return int(self.redact('0'))

@@ -81,14 +81,14 @@ Latest local run on the toolkit's 200-file practice set (practice key):
 | Files sanitized / quarantined | 193 / 7 |
 | Known identifiers detected by local practice checker | 0 / 3,230 leaked |
 | Planted canaries found | 0 / 4 |
-| Practice preservation probes | 4,770 / 4,855 (98.2%) |
-| Linkage precision / recall / F0.5 | 1.00 / 1.00 / 1.00 |
+| Practice preservation probes | 4,746 / 4,855 (97.8%) |
+| Linkage precision / recall / F0.5 | 1.00 / 0.83 / 0.96 |
 | Wrongly merged practice patients | 0 |
-| Runtime / peak RSS | 22.0 s / 38.1 MB |
+| Submission-harness runtime | 9.5 s |
 | Automated submission check | READY TO SUBMIT |
-| Unit tests | 41 passed |
+| Unit tests | 47 passed |
 
-The preservation checker reports 85 values not found in its output; this is a
+The preservation checker reports 109 values not found in its output; this is a
 privacy/utility trade-off, not evidence that every clinical value is preserved.
 The pipeline suppresses some quasi-identifiers in sparse groups. The
 separate aggregate audit covered 93 registration rows but marked its risk
@@ -103,7 +103,7 @@ Reproduce the full local checks:
 ```powershell
 $env:RAKSHA_SECRET = "practice"
 $env:PYTHONIOENCODING = "utf-8"
-python -m pip install -r requirements.txt -r requirements-security.txt -r requirements-validation.txt
+python -m pip install -r requirements.txt
 python main.py --input ".\Secret-Wards-ToolKit\dev\input" --output ".\out_check"
 python ".\Secret-Wards-ToolKit\validate_output.py" --input ".\Secret-Wards-ToolKit\dev\input" --output ".\out_check"
 python ".\check_local.py" --output ".\out_check"

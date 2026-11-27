@@ -20,7 +20,15 @@ def parse(p,max_file_mb=20):
                 result[k]=v
             return result
         def invalid_constant(_): raise ValueError('nonfinite_json_number')
-        return 'json',json.loads(s,object_pairs_hook=object_pairs,parse_constant=invalid_constant)
+        data=json.loads(s,object_pairs_hook=object_pairs,parse_constant=invalid_constant)
+        def depth(value,level=0):
+            if level>100: raise ValueError('excessive_json_depth')
+            if isinstance(value,dict):
+                for child in value.values(): depth(child,level+1)
+            elif isinstance(value,list):
+                for child in value: depth(child,level+1)
+        depth(data)
+        return 'json',data
     if p.suffix.lower() in ('.csv','.tsv'):
         delimiter='\t' if p.suffix.lower()=='.tsv' else ','
         if s.lstrip().startswith(('{','[')): raise ValueError()
@@ -40,6 +48,26 @@ def units(fmt,data):
                     for i,v in enumerate(data[k])]
             if groups: return groups
     return [('doc',data)]
+
+def infer_monthfirst(data):
+    """Infer slash-date convention from unambiguous values rather than filenames."""
+    month_hint=0
+    day_hint=0
+    def scan(value):
+        nonlocal month_hint,day_hint
+        if isinstance(value,dict):
+            for child in value.values(): scan(child)
+        elif isinstance(value,list):
+            for child in value: scan(child)
+        elif isinstance(value,str):
+            for first,second in re.findall(r'(?<!\d)(\d{1,2})[/.-](\d{1,2})[/.-]\d{2,4}(?!\d)',value):
+                a,b=int(first),int(second)
+                if a>12>=b: day_hint+=1
+                elif b>12>=a: month_hint+=1
+    scan(data)
+    if month_hint==day_hint:
+        return False
+    return month_hint>day_hint
 
 def quasi_values(record,policy):
     ages=set(); districts=set()
@@ -136,7 +164,7 @@ def main():
                 ids=evidence(v)
                 patient=links.resolve(ids,v)
                 days=date_shift_days(patient or pseudonym(ent['input_sha256']),policy.get('date_shift_days',180))
-                monthfirst='arogya' in p.name.lower()
+                monthfirst=infer_monthfirst(data)
                 prior=san.generalized
                 prior_suppressed=san.suppressed
                 suppress_quasi=patient is None or patient in sparse_patients

@@ -77,14 +77,14 @@ The latest checked run used the toolkit's 200-file synthetic practice dataset:
 | Sanitized / quarantined files | 193 / 7 |
 | Known PII found by the practice checker | 0 / 3,230 |
 | Planted canaries found | 0 / 4 |
-| Practice preservation probes retained | 4,770 / 4,855 (98.2%) |
-| Linkage precision / recall / F0.5 | 1.00 / 1.00 / 1.00 |
+| Practice preservation probes retained | 4,746 / 4,855 (97.8%) |
+| Linkage precision / recall / F0.5 | 1.00 / 0.83 / 0.96 |
 | False practice merges | 0 |
-| Regression tests | 41 passed |
+| Regression tests | 47 passed |
 | Toolkit submission harness | READY TO SUBMIT |
 
 These are practice-set results, not an official hidden-data score. The
-preservation check still misses 85 probes. The separate aggregate audit has
+preservation check still misses 109 probes. The separate aggregate audit has
 partial coverage because suppressed or missing values leave no complete
 age/location cohorts to measure. A zero practice leak count and a perfect
 practice linkage score do not prove that unseen data is safe.
